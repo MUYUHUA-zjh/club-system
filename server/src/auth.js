@@ -1,8 +1,20 @@
 import jwt from 'jsonwebtoken';
 import { db } from './db.js';
 
-export const JWT_SECRET = 'REDACTED';
-export const CHECKIN_SECRET = 'REDACTED';
+// 密钥从环境变量读取（见 .env / .env.example）。
+// 曾硬编码在此处的旧值已随代码进入 Git 历史，视作泄露并已作废，请改用 .env 中的随机值。
+function loadSecret(name) {
+  const v = process.env[name];
+  if (v) return v;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`[auth] 缺少环境变量 ${name}，生产环境已拒绝启动（禁止使用示例密钥）`);
+  }
+  console.warn(`[auth] 警告：未设置 ${name}，使用不安全的开发默认值，请配置 .env`);
+  return 'dev-insecure-default-change-me';
+}
+
+export const JWT_SECRET = loadSecret('JWT_SECRET');
+export const CHECKIN_SECRET = loadSecret('CHECKIN_SECRET');
 
 export function signToken(user) {
   return jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
